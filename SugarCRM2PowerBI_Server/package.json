@@ -1,0 +1,9 @@
+{
+  "name": "sugar-crm2-power-bi_server",
+  "version": "0.0.0",
+  "description": "SugarCRM2PowerBI_Server",
+  "main": "app.js",
+  "author": {
+    "name": "Mike"
+  }
+}
