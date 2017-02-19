@@ -1,1 +1,4 @@
-﻿console.log('Hello world');
+﻿var admin = require('./js/admin');
+
+admin.init(); // initialize
+
