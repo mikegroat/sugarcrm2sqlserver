@@ -4,73 +4,12 @@
 
 //todo: change the switches in the startup and stdin arguments to reflect the correct arguments for this
 var http = require("https");
-var request = require("request");
-var userName = '';
-var passWord = '';
-var accessToken = '';
-var refreshToken = '';
-var accountOffset = 0;
-
-var GetToken = function () {
-    var Tokenoptions = {
-        method: 'POST',
-        url: 'https://daon.sugarondemand.com/rest/v10/oauth2/token/',
-        headers:
-        {
-            'postman-token': '6f4505ce-c417-2e4f-66e1-428e7ecefb6f',
-            'cache-control': 'no-cache'
-        },
-        body: '{\n  "grant_type" : "password",\n  "client_id" : "sugar",\n  "client_secret" : "",\n  "username" : "' + userName + '",\n  "password" : "' + passWord + '",\n  "platform" : "api"\n}'
-    };
-
-    request(Tokenoptions, function (error, response, body) {
-        if (error) throw new Error(error);
-
-        console.log(body);
-        accessToken = JSON.parse(body).access_token;
-        refreshToken = JSON.parse(body).refresh_token;
-    });
-};
-
-var fullacctset = [];
-var nextoffset = 0;
-
-var GetAccounts = function () {
-    var carryon = true;
-    var curracctset = '';
-    var returnedJSON = '';
-    var fullurl = 'https://daon.sugarondemand.com/rest/v10/Accounts'
-    var options = {
-        method: 'GET',
-        url: fullurl + "&offset=" + nextoffset,
-        headers:
-        {
-            'postman-token': 'f2ce0c00-35c1-dd0e-daa8-b021eb0ff287',
-            'cache-control': 'no-cache',
-            'oauth-token': accessToken
-        }
-    };
-
-    request(options, function (error, response, body) {
-        if (error) throw new Error(error);
-
-//        console.log(body);
-        returnedJSON = body;
-        curracctset = JSON.parse(returnedJSON).records;
-        fullacctset = fullacctset.concat(curracctset);
-        nextoffset = JSON.parse(returnedJSON).next_offset;
-        console.log("\noffset = " + nextoffset);
-        if (nextoffset >= 0) {
-            GetAccounts();
-        } else {
-            console.log("\nAccount Fetch Completed!");
-            console.log("\nFetched " + fullacctset.length + " accounts.");
-            nextoffset = 0;
-        };
-    });
-};
-
-
+var sqlserver = require("./sqlserver");
+var sql = new sqlserver.sql();
+var sugarserver = require("./sugarserver");
+var sugar = new sugarserver.sugar();
+var dataset = require("./dataset");
+var data = new dataset.data();
 
 exports.init = function () {
     console.log("Initializing...");
@@ -80,11 +19,11 @@ exports.init = function () {
             var arg = val.substring(val.indexOf('=') + 1, val.length);
             switch (argType) {
                 case 'username':
-                    userName = parseInt(arg);
+                    SugarUserName = parseInt(arg);
                     console.log('username set\n');
                     break;
                 case 'password':
-                    passWord = parseInt(arg);
+                    SugarPassword = parseInt(arg);
                     console.log('password set\n');
                     break;
                 default:
@@ -108,28 +47,29 @@ exports.init = function () {
                 case 'stats':
                     console.log('>>stats requested... feature not yet enabled');
                     break;
-                case 'username':
-                    userName = argVal;
-                    console.log('>>username set to "' + userName + '"');
+                case 'sugar_username':
+                    sugar.setUserName(argVal);
                     break;
-                case 'password':
-                    passWord = argVal;
-                    console.log('>>password set to "' + passWord +'"');
+                case 'sugar_password':
+                    sugar.setPassword(argVal);
+                    break;
+                case 'sql_username':
+                    sql.setUserName(argVal);
+                    break;
+                case 'sql_password':
+                    sql.setPassword(argVal);
                     break;
                 case 'token':
-                    if (userName == '' || passWord == '') {
-                        console.log('Blank Username and/or Password... no token requested');
-                        break;
-                    } else {
-                        GetToken();
-                    }
+                    sugar.GetSugarToken();
+                    break;
+                case 'getschema':
+                    sugar.GetSchema(sql.genSchema);
                     break;
                 case 'accounts':
-                    if (accessToken == '') {
-                        console.log('No login token available... accounts not requested');
-                        break;
-                    }
-                    GetAccounts();
+                    sugar.GetAccounts(data.accounts);
+                    break;
+                case 'acct_structure':
+                    data.account_structure();
                     break;
                 case 'pause':
                     if (genWordInterval != 0) {
@@ -146,17 +86,33 @@ exports.init = function () {
                     } else console.log('>>already unpaused');
                     console.log(' ');
                     break;
+                case 'query':
+                    sql.testQuery();
+                    break;
+                case 'connect':
+                    sql.connect();
+                    break;
                 case 'interval':
                     wordIntervalLength = parseInt(argVal);
                     console.log('>>new update interval requested... feature not yet enabled');
                     break;
                 case 'help':
+                    console.log('>>accounts - requests all the accounts from SugarCRM');
+                    console.log('>>acct_structure - generates a string that defines the structure of the accounts table');
+                    console.log('>>connect - connects to the SQL Server database');
+                    console.log('>>getschema - gets the SugarCRM schema');
                     console.log('>>help - prints out this screen');
                     console.log('>>interval nnn - changes the delay between SugarCRM data transfers to nnn minutes');
                     console.log('>>kill - stops this process completely');
                     console.log('>>memory - gives you stats on memory usage of the SugarCRM data transfer process');
                     console.log('>>pause - pauses SugarCRM data transfer');
+                    console.log('>>query - executes a query against the sample database for testing purposes');
+                    console.log('>>sql_password - enters the password for the SQL Server');
+                    console.log('>>sql_username - enters the username for the SQL Server');
                     console.log('>>stats - prints the SugarCRM data transfer statistics since this process has been running');
+                    console.log('>>sugar_password - enters the password for SugarCRM');
+                    console.log('>>sugar_username - enters the username for SugarCRM');
+                    console.log('>>token - requests the SugarCRM oauth token');
                     console.log('>>unpause- unpauses SugarCRM data transfer');
                     console.log('>>uptime - prints the duration that the SugarCRM data transfer process has been running');
                     console.log(' ');

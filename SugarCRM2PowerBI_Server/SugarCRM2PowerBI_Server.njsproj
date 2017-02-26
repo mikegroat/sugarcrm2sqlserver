@@ -32,6 +32,9 @@
   <ItemGroup>
     <Compile Include="app.js" />
     <Compile Include="js\admin.js" />
+    <Compile Include="js\dataset.js" />
+    <Compile Include="js\sqlserver.js" />
+    <Compile Include="js\sugarserver.js" />
     <Content Include="package.json" />
     <Content Include="README.md" />
   </ItemGroup>
