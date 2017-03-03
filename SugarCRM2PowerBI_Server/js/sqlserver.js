@@ -4,7 +4,7 @@ var TYPES = require('tedious').TYPES;
 
 exports.sql = function () {
 
-    var schemaSQL = '';
+    var SQLString = '';
     var connected = false;
     var connection;
     var config = {
@@ -48,25 +48,28 @@ exports.sql = function () {
         } else console.log(">>ERROR: connection not attempted - no username or password provided");
     };
 
-    this.testQuery = function () {
-        request = new Request("SELECT c.CustomerID, c.CompanyName,COUNT(soh.SalesOrderID) AS OrderCount FROM SalesLT.Customer AS c LEFT OUTER JOIN SalesLT.SalesOrderHeader AS soh ON c.CustomerID = soh.CustomerID GROUP BY c.CustomerID, c.CompanyName ORDER BY OrderCount DESC;", function (err) {
+    this.doQuery = function () {
+        console.log('>>Executing query:\n');
+        console.log(SQLString);
+        console.log('\n>>End of query');
+        request = new Request(SQLString, function (err) {
             if (err) {
                 console.log(err);
             }
         });
-        var result = "";
-        request.on('row', function (columns) {
-            columns.forEach(function (column) {
-                if (column.value === null) {
-                    console.log('NULL');
-                } else {
-                    result += column.value + " ";
-                }
-            });
-            console.log(result);
-            result = "";
-        });
-
+//        var result = "";
+//        request.on('row', function (columns) {
+//            columns.forEach(function (column) {
+//                if (column.value === null) {
+//                    console.log('NULL');
+//                } else {
+//                    result += column.value + " ";
+//                }
+//            });
+//            console.log(result);
+//            result = "";
+//        });
+//
         request.on('done', function (rowCount, more) {
             console.log(rowCount + ' rows returned');
         });
@@ -79,7 +82,7 @@ exports.sql = function () {
             var typeString = '';
             switch (field.type) {
                 case 'assigned_user_name':
-                    typeString = 'varchar FOREIGN KEY Users ';
+                    typeString = 'varchar ';
                     break;
                 case 'bool':
                     typeString = 'bit NOT NULL DEFAULT (0) ';
@@ -97,7 +100,7 @@ exports.sql = function () {
                     typeString = 'varchar UNIQUE ';
                     break;
                 case 'link':
-                    typeString = 'varchar FOREIGN KEY ' + field.relationship + ' ';
+                    typeString = 'varchar ';
                     break;
                 case 'name':
                     typeString = 'varchar ';
@@ -130,24 +133,28 @@ exports.sql = function () {
             return typeString;
         };
 
-        schemaSQL = 'CREATE SCHEMA SugarSchema';
-
-        // process each table/module
-        for (var tablekey in jSchema.modules) {
-            console.log('>>Processing table ' + tablekey + ' schema def');
-            schemaSQL += ' \n\nCREATE TABLE ' + tablekey + ' (';
-            var prefix = '';
-            var fields = jSchema.modules.Accounts.fields
-            for (var fieldkey in fields) {
-                if (fields[fieldkey].name) {
-                    schemaSQL += prefix + fields[fieldkey].name + ' ' + getType(fields[fieldkey]);
-                    prefix = ', ';
+        SQLString = '';
+        if (jSchema) {
+            // process each table/module
+            for (var tablekey in jSchema.modules) {
+                console.log('>>Processing table ' + tablekey + ' schema def');
+                SQLString += ' \n\nCREATE TABLE ' + tablekey + ' (';
+                var prefix = '';
+                var fields = jSchema.modules[tablekey].fields;
+                for (var fieldkey in fields) {
+                    if (fields[fieldkey].name) {
+                        SQLString += prefix + fields[fieldkey].name + ' ' + getType(fields[fieldkey]);
+                        prefix = ', ';
+                    };
                 };
+                SQLString += ')'
             };
-            schemaSQL += ')'
+        } else {
+            console.log('>>ERROR: no tables selected. No SQL created.');
         };
-        schemaSQL += ';'
+        SQLString += ';'
         console.log('>>Done processing schema.');
-//        console.log(schemaSQL);
+//        return SQLString;
+        console.log(SQLString);
     };
 };

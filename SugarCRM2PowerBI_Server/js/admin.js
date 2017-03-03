@@ -10,6 +10,7 @@ var sugarserver = require("./sugarserver");
 var sugar = new sugarserver.sugar();
 var dataset = require("./dataset");
 var data = new dataset.data();
+var sqlString = '';
 
 exports.init = function () {
     console.log("Initializing...");
@@ -63,7 +64,7 @@ exports.init = function () {
                     sugar.GetSugarToken();
                     break;
                 case 'getschema':
-                    sugar.GetSchema(sql.genSchema);
+                    sugar.GetSchema();
                     break;
                 case 'accounts':
                     sugar.GetAccounts(data.accounts);
@@ -87,7 +88,10 @@ exports.init = function () {
                     console.log(' ');
                     break;
                 case 'query':
-                    sql.testQuery();
+                    sql.doQuery();
+                    break;
+                case 'table':
+                    sql.genSchema(sugar.Schema(argVal));
                     break;
                 case 'connect':
                     sql.connect();
@@ -95,6 +99,9 @@ exports.init = function () {
                 case 'interval':
                     wordIntervalLength = parseInt(argVal);
                     console.log('>>new update interval requested... feature not yet enabled');
+                    break;
+                case 'listtables':
+                    sugar.ListTables();
                     break;
                 case 'help':
                     console.log('>>accounts - requests all the accounts from SugarCRM');
@@ -104,6 +111,7 @@ exports.init = function () {
                     console.log('>>help - prints out this screen');
                     console.log('>>interval nnn - changes the delay between SugarCRM data transfers to nnn minutes');
                     console.log('>>kill - stops this process completely');
+                    console.log('>>listtables - lists all the tables in the Sugar schema');
                     console.log('>>memory - gives you stats on memory usage of the SugarCRM data transfer process');
                     console.log('>>pause - pauses SugarCRM data transfer');
                     console.log('>>query - executes a query against the sample database for testing purposes');
@@ -112,6 +120,7 @@ exports.init = function () {
                     console.log('>>stats - prints the SugarCRM data transfer statistics since this process has been running');
                     console.log('>>sugar_password - enters the password for SugarCRM');
                     console.log('>>sugar_username - enters the username for SugarCRM');
+                    console.log('>>table <tablename> - creates the SQL Server schema for that table');
                     console.log('>>token - requests the SugarCRM oauth token');
                     console.log('>>unpause- unpauses SugarCRM data transfer');
                     console.log('>>uptime - prints the duration that the SugarCRM data transfer process has been running');
