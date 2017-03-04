@@ -10,22 +10,22 @@ var sugarserver = require("./sugarserver");
 var sugar = new sugarserver.sugar();
 var dataset = require("./dataset");
 var data = new dataset.data();
+var Schemas = require("./schemas");
+var schemas = new Schemas.schemadata();
 var sqlString = '';
 
 exports.init = function () {
     console.log("Initializing...");
     process.argv.forEach(function (val, index, array) {
         if (index > 1) {
-            var argType = val.substr(0, val.indexOf('=', 0));
-            var arg = val.substring(val.indexOf('=') + 1, val.length);
+            var argType = val.substr(0, val.indexOf(' ', 0));
+            var argVal = val.substring(val.indexOf(' ') + 1, val.length);
             switch (argType) {
-                case 'username':
-                    SugarUserName = parseInt(arg);
-                    console.log('username set\n');
+                case 'sugar_username':
+                    sugar.setUserName(argVal);
                     break;
-                case 'password':
-                    SugarPassword = parseInt(arg);
-                    console.log('password set\n');
+                case 'sugar_password':
+                    sugar.setPassword(argVal);
                     break;
                 default:
                     console.log('Invalid argument: ' + val);
@@ -63,8 +63,11 @@ exports.init = function () {
                 case 'token':
                     sugar.GetSugarToken();
                     break;
-                case 'getschema':
-                    sugar.GetSchema();
+                case 'get_sugar_schema':
+                    sugar.GetSchema(schemas.setSugarSchema);
+                    break;
+                case 'get_SQL_schema':
+                    schemas.setSQLSchema(sql.GetSchema());
                     break;
                 case 'accounts':
                     sugar.GetAccounts(data.accounts);
@@ -73,25 +76,30 @@ exports.init = function () {
                     data.account_structure();
                     break;
                 case 'pause':
-                    if (genWordInterval != 0) {
+//                    if (genWordInterval != 0) {
                         console.log('>>pause requested... feature not yet enabled');
-                        clearInterval(genWordInterval);
-                        genWordInterval = 0;
-                    } else console.log('>>already paused');
-                    console.log(' ');
+//                        clearInterval(genWordInterval);
+//                        genWordInterval = 0;
+//                    } else console.log('>>already paused');
+//                    console.log(' ');
                     break;
                 case 'unpause':
-                    if (genWordInterval == 0) {
+//                    if (genWordInterval == 0) {
                         console.log('>>unpause requested... feature not yet enabled');
-                        genWordInterval = setInterval(genWord, wordIntervalLength);
-                    } else console.log('>>already unpaused');
-                    console.log(' ');
+//                        genWordInterval = setInterval(genWord, wordIntervalLength);
+//                    } else console.log('>>already unpaused');
+//                    console.log(' ');
                     break;
                 case 'query':
                     sql.doQuery();
                     break;
                 case 'table':
-                    sql.genSchema(sugar.Schema(argVal));
+                    sql.genSchema(schemas.getSugarTableSchema(argVal));
+                    break;
+                case 'populate':
+                    sugar.getTableData(argVal, function (records) {
+                        sql.populateTable(schemas.getSugarTableSchema(argVal, 'temp_'+argVal), records);
+                    });
                     break;
                 case 'connect':
                     sql.connect();
@@ -100,21 +108,26 @@ exports.init = function () {
                     wordIntervalLength = parseInt(argVal);
                     console.log('>>new update interval requested... feature not yet enabled');
                     break;
-                case 'listtables':
-                    sugar.ListTables();
+                case 'list_sugar_tables':
+                    schemas.listSugarTables();
+                    break;
+                case 'list_sql_tables':
+                    schemas.listSQLTables();
                     break;
                 case 'help':
                     console.log('>>accounts - requests all the accounts from SugarCRM');
                     console.log('>>acct_structure - generates a string that defines the structure of the accounts table');
                     console.log('>>connect - connects to the SQL Server database');
-                    console.log('>>getschema - gets the SugarCRM schema');
+                    console.log('>>get_sugar_schema - gets and stores the SugarCRM schema');
+                    console.log('>>get_SQL_schema - gets and stores the SQL Server schema');
                     console.log('>>help - prints out this screen');
                     console.log('>>interval nnn - changes the delay between SugarCRM data transfers to nnn minutes');
                     console.log('>>kill - stops this process completely');
-                    console.log('>>listtables - lists all the tables in the Sugar schema');
+                    console.log('>>list_sugar_tables - lists all the tables in the Sugar schema');
                     console.log('>>memory - gives you stats on memory usage of the SugarCRM data transfer process');
                     console.log('>>pause - pauses SugarCRM data transfer');
-                    console.log('>>query - executes a query against the sample database for testing purposes');
+                    console.log('>>populate <tablename> - gets the data for the table from sugar and populates it into SQL Server');
+                    console.log('>>query - executes the last generated SQL query against the SQL Server database');
                     console.log('>>sql_password - enters the password for the SQL Server');
                     console.log('>>sql_username - enters the username for the SQL Server');
                     console.log('>>stats - prints the SugarCRM data transfer statistics since this process has been running');
