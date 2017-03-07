@@ -98,7 +98,7 @@ exports.init = function () {
                     break;
                 case 'populate':
                     sugar.getTableData(argVal, function (records) {
-                        sql.populateTable(schemas.getSugarTableSchema(argVal, 'temp_'+argVal), records);
+                        sql.populateTable(schemas.getSugarTableSchema(argVal, 'temp_'+argVal), records, argVal);
                     });
                     break;
                 case 'connect':
@@ -114,6 +114,15 @@ exports.init = function () {
                 case 'list_sql_tables':
                     schemas.listSQLTables();
                     break;
+                case 'set_query':
+                    sql.setQuery(argVal);
+                    break;
+                case 'show_query':
+                    console.log(sql.getQuery());
+                    break;
+                case 'show_field_list':
+                    sql.showFieldList(schemas.getSugarTableSchema(argVal));
+                    break;
                 case 'help':
                     console.log('>>accounts - requests all the accounts from SugarCRM');
                     console.log('>>acct_structure - generates a string that defines the structure of the accounts table');
@@ -128,6 +137,9 @@ exports.init = function () {
                     console.log('>>pause - pauses SugarCRM data transfer');
                     console.log('>>populate <tablename> - gets the data for the table from sugar and populates it into SQL Server');
                     console.log('>>query - executes the last generated SQL query against the SQL Server database');
+                    console.log('>>set_query <query> - sets the query string to the query provided');
+                    console.log('>>show_field_list <tablename> - shows the list of fields for that table with both the Sugar and SQL types they are converted to');
+                    console.log('>>show_query - shows the last query statement that was generated');
                     console.log('>>sql_password - enters the password for the SQL Server');
                     console.log('>>sql_username - enters the username for the SQL Server');
                     console.log('>>stats - prints the SugarCRM data transfer statistics since this process has been running');
